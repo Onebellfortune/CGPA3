@@ -239,6 +239,17 @@ std::vector<vertex> create_circle_vertices(uint N)
 
 	}
 
+	r = 2.91f;
+	for (uint k = 0; k <= N / 2; k++)
+	{
+		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
+		for (uint j = 0; j <= N; j++) {
+			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
+			v.push_back({ vec3(r * sint * cosp,r * sint * sinp,r * cost+1.0f), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+		}
+
+	}
+
 
 	return v;
 }
