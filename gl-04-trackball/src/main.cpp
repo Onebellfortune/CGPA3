@@ -91,9 +91,9 @@ void render()
 	mat4 model_matrix;
 	
 	model_matrix = mat4::translate(move, 0.0f, -abs(move)) *
-		mat4::translate(cam.at) *
-		mat4::rotate(vec3(0, 0, 1), theta) *
-		mat4::translate(-cam.at);
+
+		mat4::rotate(vec3(0, 0, 1), theta);
+		
 
 	theta += delta_time * 0.5f;
 	

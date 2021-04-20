@@ -78,7 +78,7 @@ inline mat4 trackball::update_zoom(vec2 m) const
 	printf("y_axis: %lf\n", p1.y);
 	
 	return view_matrix0 *
-		mat4::scale(p1.y,p1.y,p1.y);
+		mat4::translate(p1.y,p1.y,p1.y);
 }
 
 inline mat4 trackball::update_pan(vec2 m) const
