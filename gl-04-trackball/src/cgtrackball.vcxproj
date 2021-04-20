@@ -59,6 +59,7 @@
   <ItemGroup>
     <ClInclude Include="cgmath.h" />
     <ClInclude Include="cgut.h" />
+    <ClInclude Include="circle.h" />
     <ClInclude Include="trackball.h" />
   </ItemGroup>
   <ItemGroup>

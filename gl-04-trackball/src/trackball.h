@@ -44,11 +44,11 @@ inline mat4 trackball::update( vec2 m ) const
 	// - mat3(view_matrix0).transpose(): inverse view-to-world matrix
 	vec3 v = mat3(view_matrix0).transpose()*p0.cross(p1);
 	float theta = asin( std::min(v.length(),1.0f) );
-	printf("%lf %lf %lf %lf %lf %lf\n", view_matrix0._11, view_matrix0._12, view_matrix0._13, view_matrix0._21, view_matrix0._22, view_matrix0._23);
+	//printf("%lf %lf %lf %lf %lf %lf\n", view_matrix0._11, view_matrix0._12, view_matrix0._13, view_matrix0._21, view_matrix0._22, view_matrix0._23);
 	// resulting view matrix, which first applies
 	// trackball rotation in the world space
-	printf("x_axis: %lf\n", v.x);
-	printf("y_axis: %lf\n", v.y);
+	//printf("x_axis: %lf\n", v.x);
+	//printf("y_axis: %lf\n", v.y);
 
 	return view_matrix0*mat4::rotate(v.normalize(),theta);
 }
@@ -60,8 +60,8 @@ inline mat4 trackball::update_zoom(vec2 m) const
 	static const vec3 p0 = vec3(0, 0, 1.0f);	// reference position on sphere
 	vec3 p1 = vec3(m - m0, 0);					// displacement
 	if (!b_tracking || length(p1) < 0.0001f) return view_matrix0;		// ignore subtle movement
-	//p1 *= scale;														// apply rotation scale
-	//p1 = vec3(p1.x, p1.y, sqrtf(std::max(0.0f, 1.0f - length2(p1)))).normalize();	// back-project z=0 onto the unit sphere
+	p1 *= scale;														// apply rotation scale
+	p1 = vec3(p1.x, p1.y, sqrtf(std::max(0.0f, 1.0f - length2(p1)))).normalize();	// back-project z=0 onto the unit sphere
 	
 	// find rotation axis and angle in world space
 	// - trackball self-rotation should be done at first in the world space
@@ -71,14 +71,26 @@ inline mat4 trackball::update_zoom(vec2 m) const
 	float theta = asin(std::min(v.length(), 1.0f));
 	/*view_matrix0.look_at(v, (view_matrix0._21, view_matrix0._22, view_matrix0._23)
 		, (view_matrix0._31, view_matrix0._32, view_matrix0._33));*/
-	printf("%lf %lf %lf %lf %lf %lf\n", view_matrix0._11,view_matrix0._12,view_matrix0._13,view_matrix0._21, view_matrix0._22, view_matrix0._23);
+	//printf("%lf %lf %lf %lf %lf %lf\n", view_matrix0._11,view_matrix0._12,view_matrix0._13,view_matrix0._21, view_matrix0._22, view_matrix0._23);
 	// resulting view matrix, which first applies
 	// trackball rotation in the world space
-	printf("x_axis: %lf\n", p1.x);
-	printf("y_axis: %lf\n", p1.y);
+	//printf("x_axis: %lf\n", p1.x);
+	//printf("y_axis: %lf\n", p1.y);
+	mat4 rebuild = view_matrix0;
+	vec3 n_eyeminusat = vec3(view_matrix0._11, view_matrix0._12, view_matrix0._13);
+	vec3 u_upcrossn = vec3(view_matrix0._21, view_matrix0._22, view_matrix0._23);
+	vec3 v_ncrossu = vec3(view_matrix0._31, view_matrix0._32, view_matrix0._33);
+	rebuild._34 += p1.y*10.0f;
 	
-	return view_matrix0 *
-		mat4::translate(p1.y,p1.y,p1.y);
+	//rebuild = rebuild.transpose();
+	//mat4 rebuild = view_matrix0*mat4::rotate(v.normalize(), theta);
+
+	/*printf("%lf %lf %lf\n %lf %lf %lf\n %lf %lf %lf\n", 
+		view_matrix0._11, view_matrix0._12, view_matrix0._13, 
+		view_matrix0._21, view_matrix0._22, view_matrix0._23,
+		view_matrix0._31, view_matrix0._32, view_matrix0._33);*/
+	printf("% lf % lf % lf\n",view_matrix0._14, view_matrix0._24, view_matrix0._34);
+	return rebuild;
 }
 
 inline mat4 trackball::update_pan(vec2 m) const
@@ -97,10 +109,12 @@ inline mat4 trackball::update_pan(vec2 m) const
 	// - mat3(view_matrix0).transpose(): inverse view-to-world matrix
 	vec3 v = mat3(view_matrix0).transpose() * p0.cross(p1);
 	float theta = asin(std::min(v.length(), 1.0f));
-	
+	mat4 rebuild = view_matrix0;
+	rebuild._14 += p1.x * 10.0f;
+	rebuild._24 += p1.y * 10.0f;
 	// resulting view matrix, which first applies
 	// trackball rotation in the world space
-	return view_matrix0 * mat4::rotate(v.normalize(), theta);
+	return rebuild;
 }
 
 // utility function

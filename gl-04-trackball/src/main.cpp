@@ -1,6 +1,7 @@
 #include "cgmath.h"		// slee's simple math library
 #include "cgut.h"		// slee's OpenGL utility
 #include "trackball.h"	// virtual trackball
+#include "circle.h"
 
 //*************************************
 // global constants
@@ -9,12 +10,12 @@ static const char*	vert_shader_path = "../bin/shaders/trackball.vert";
 static const char*	frag_shader_path = "../bin/shaders/trackball.frag";
 
 uint				NUM_TESS = 72;
-
+uint				NUM_SPHERES = 9;
 //*************************************
 // common structures
 struct camera
 {
-	vec3	eye = vec3( 5, 0, 0 );
+	vec3	eye = vec3( 50, 0, 0 );
 	vec3	at = vec3( 0, 0, 0 );
 	vec3	up = vec3( 0, 0, 1 );
 	mat4	view_matrix = mat4::look_at( eye, at, up );
@@ -46,13 +47,13 @@ bool	b_rotation_mode = false;
 GLint	tc_xy = 0;
 float theta = 0.0f;
 float t0 = 0.0f;
-
+auto	spheres = std::move(create_spheres(NUM_SPHERES));
 //*************************************
 // scene objects
 
 camera		cam;
 trackball	tb;
-std::vector<vertex>	unit_circle_vertices;	// host-side vertices
+std::vector<vertex>	sun;	// host-side vertices
 
 //*************************************
 void update()
@@ -85,23 +86,20 @@ void render()
 
 	// bind vertex array object
 	glBindVertexArray(vertex_array);
-	float t = (float)glfwGetTime();
-	float move = (-0.5f) * 500.0f * float(1 / 2);
-	float delta_time = t - t0;
-	mat4 model_matrix;
-	
-	model_matrix = mat4::translate(move, 0.0f, -abs(move)) *
-
-		mat4::rotate(vec3(0, 0, 1), theta);
+	for (auto& s : spheres) {
+		float t = (float)glfwGetTime();
 		
-
-	theta += delta_time * 0.5f;
+		float delta_time = t - t0;
+		s.update(theta);
+		
+		theta += delta_time * 0.5f;
+		t0 = t;
+		// render vertices: trigger shader programs to process vertex data
+		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
+		glDrawElements(GL_TRIANGLES, NUM_TESS * (NUM_TESS) *3*9, GL_UNSIGNED_INT, nullptr);
+	}
 	
-	t0 = t;
-	// render vertices: trigger shader programs to process vertex data
-	glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, model_matrix);
-	glDrawElements( GL_TRIANGLES, NUM_TESS * (NUM_TESS) * 3, GL_UNSIGNED_INT, nullptr );
-
+	
 	// swap front and back buffers, and display to screen
 	glfwSwapBuffers( window );
 }
@@ -276,30 +274,47 @@ std::vector<vertex> create_circle_vertices(uint N)
 {
 	std::vector<vertex> v = { { vec3(0,0,0), vec3(0,0,-1.0f), vec2(0.5f) } }; // origin
 	//float r = circles[0].radius;
-	float r = 0.91f;
+	float	r = 10.f;
 	//printf("radius of circle 0: %lf\n", r);
 	for (uint k = 0; k <= N / 2; k++)
 	{
 		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
 		for (uint j = 0; j <= N; j++) {
 			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
-			v.push_back({ vec3(r * sint * cosp,r * sint * sinp,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+			v.push_back({ vec3(r*sint * cosp,r*sint * sinp,r*cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
 		}
 
 	}
-
-	/*r = 2.91f;
+	r = 0.91f;
 	for (uint k = 0; k <= N / 2; k++)
 	{
 		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
 		for (uint j = 0; j <= N; j++) {
 			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
-			v.push_back({ vec3(r * sint * cosp,r * sint * sinp,r * cost + 1.0f), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+			v.push_back({ vec3(r * sint * cosp+20,r * sint * sinp,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
 		}
 
-	}*/
+	}
+	r = 1.91f;
+	for (uint k = 0; k <= N / 2; k++)
+	{
+		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
+		for (uint j = 0; j <= N; j++) {
+			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
+			v.push_back({ vec3(r * sint * cosp + 25,r * sint * sinp,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+		}
 
+	}
+	r = 2.51f;
+	for (uint k = 0; k <= N / 2; k++)
+	{
+		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
+		for (uint j = 0; j <= N; j++) {
+			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
+			v.push_back({ vec3(r * sint * cosp + 45,r * sint * sinp,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+		}
 
+	}
 	return v;
 }
 
@@ -315,10 +330,13 @@ bool user_init()
 	glEnable( GL_DEPTH_TEST );								// turn on depth tests
 
 	// load the mesh
-	unit_circle_vertices = std::move(create_circle_vertices(NUM_TESS));
-
+	float radii = 0.91f;
+	float orbit_radius = 5.0f;
+	sun = std::move(create_circle_vertices(NUM_TESS));
+	
 	// create vertex buffer; called again when index buffering mode is toggled
-	update_vertex_buffer(unit_circle_vertices, NUM_TESS);
+	update_vertex_buffer(sun, NUM_TESS);
+	
 
 
 	return true;
