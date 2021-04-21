@@ -271,7 +271,7 @@ inline ivec2 cg_default_window_size( bool b_scale_by_dpi=true )
 #ifdef GL_ES_VERSION_2_0
 	ivec2 size = ivec2( 576, 1024 );	// initial window size similarly to smartphone
 #else
-	ivec2 size = ivec2( 720, 480 );	// initial window size
+	ivec2 size = ivec2( 1280, 720 );	// initial window size
 #endif
 	return b_scale_by_dpi ? cg_scale_by_dpi( size ) : size;
 }

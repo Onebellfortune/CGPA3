@@ -15,7 +15,7 @@ uint				NUM_SPHERES = 9;
 // common structures
 struct camera
 {
-	vec3	eye = vec3( 50, 0, 0 );
+	vec3	eye = vec3( 300, 0, 0 );
 	vec3	at = vec3( 0, 0, 0 );
 	vec3	up = vec3( 0, 0, 1 );
 	mat4	view_matrix = mat4::look_at( eye, at, up );
@@ -65,7 +65,7 @@ void update()
 	// build the model matrix for oscillating scale
 	float t = float(glfwGetTime());
 	float scale	= 1.0f+float(cos(t*1.5f))*5.0f;
-	//mat4 model_matrix;
+	mat4 model_matrix;
 
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
@@ -73,7 +73,7 @@ void update()
 	uloc = glGetUniformLocation(program, "tc_xy");	if (uloc > -1) glUniform1i(uloc, tc_xy);
 	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
-	//uloc = glGetUniformLocation( program, "model_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, model_matrix );
+	uloc = glGetUniformLocation( program, "model_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, model_matrix );
 }
 
 void render()
@@ -86,18 +86,24 @@ void render()
 
 	// bind vertex array object
 	glBindVertexArray(vertex_array);
+	
+	
 	for (auto& s : spheres) {
 		float t = (float)glfwGetTime();
-		
 		float delta_time = t - t0;
-		s.update(theta);
-		
+		s.update(t);
 		theta += delta_time * 0.5f;
 		t0 = t;
-		// render vertices: trigger shader programs to process vertex data
 		glUniformMatrix4fv(glGetUniformLocation(program, "model_matrix"), 1, GL_TRUE, s.model_matrix);
-		glDrawElements(GL_TRIANGLES, NUM_TESS * (NUM_TESS) *3*9, GL_UNSIGNED_INT, nullptr);
+		glDrawElements(GL_TRIANGLES, NUM_TESS * (NUM_TESS) * 3 , GL_UNSIGNED_INT, nullptr);
 	}
+	
+	
+	
+	
+		// render vertices: trigger shader programs to process vertex data
+	
+	
 	
 	
 	// swap front and back buffers, and display to screen
@@ -205,7 +211,7 @@ void update_vertex_buffer(const std::vector<vertex>& vertices, uint N)
 		uint k1, k2;
 		for (uint k = 0; k <= N; k++)
 		{
-			k1 = k * N;      // k1 -- k1+1
+			k1 = k * (N+1);      // k1 -- k1+1
 							 // |	/		
 			k2 = k1 + N + 1; // k2 -- k2+1   
 
@@ -213,14 +219,18 @@ void update_vertex_buffer(const std::vector<vertex>& vertices, uint N)
 			{
 				k1++;
 				k2++;
-
-				indices.push_back(k1);
-				indices.push_back(k2);
-				indices.push_back(k1 + 1);
-
-				indices.push_back(k1 + 1);
-				indices.push_back(k2);
-				indices.push_back(k2 + 1);
+				if (k != 0) {
+					indices.push_back(k1);
+					indices.push_back(k2);
+					indices.push_back(k1 + 1);
+				}
+				
+				if (k != N - 1) {
+					indices.push_back(k1 + 1);
+					indices.push_back(k2);
+					indices.push_back(k2 + 1);
+				}
+				
 
 			}
 		}
@@ -274,47 +284,100 @@ std::vector<vertex> create_circle_vertices(uint N)
 {
 	std::vector<vertex> v = { { vec3(0,0,0), vec3(0,0,-1.0f), vec2(0.5f) } }; // origin
 	//float r = circles[0].radius;
-	float	r = 10.f;
+	float	r = 30.f;
 	//printf("radius of circle 0: %lf\n", r);
-	for (uint k = 0; k <= N / 2; k++)
+
+	for (uint k = 0; k <= N/2 ; k++)
 	{
 		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
 		for (uint j = 0; j <= N; j++) {
 			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
-			v.push_back({ vec3(r*sint * cosp,r*sint * sinp,r*cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+			v.push_back({ vec3(sint * cosp,sint * sinp,cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
 		}
 
 	}
-	r = 0.91f;
-	for (uint k = 0; k <= N / 2; k++)
+	
+	/*r = 2.51f;
+	for (uint k = 0; k <= N/2 ; k++)
 	{
 		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
 		for (uint j = 0; j <= N; j++) {
 			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
-			v.push_back({ vec3(r * sint * cosp+20,r * sint * sinp,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+			v.push_back({ vec3(r * sint * cosp + 45,r * sint * sinp+30,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
 		}
 
 	}
 	r = 1.91f;
-	for (uint k = 0; k <= N / 2; k++)
+	for (uint k = 0; k <= N/2 ; k++)
 	{
 		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
 		for (uint j = 0; j <= N; j++) {
 			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
-			v.push_back({ vec3(r * sint * cosp + 25,r * sint * sinp,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+			v.push_back({ vec3(r * sint * cosp + 55,r * sint * sinp-20,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
 		}
 
 	}
-	r = 2.51f;
-	for (uint k = 0; k <= N / 2; k++)
+	r = 4.f;
+	for (uint k = 0; k <= N/2 ; k++)
 	{
 		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
 		for (uint j = 0; j <= N; j++) {
 			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
-			v.push_back({ vec3(r * sint * cosp + 45,r * sint * sinp,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+			v.push_back({ vec3(r * sint * cosp+70,r * sint * sinp+90,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
 		}
 
 	}
+	r = 3.f;
+	for (uint k = 0; k <= N/2; k++)
+	{
+		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
+		for (uint j = 0; j <= N; j++) {
+			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
+			v.push_back({ vec3(r * sint * cosp + 80,r * sint * sinp+40,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+		}
+
+	}
+	r = 10.f;
+	for (uint k = 0; k <= N/2; k++)
+	{
+		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
+		for (uint j = 0; j <= N; j++) {
+			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
+			v.push_back({ vec3(r * sint * cosp + 100,r * sint * sinp+50,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+		}
+
+	}
+
+	r = 7.f;
+	for (uint k = 0; k <= N/2; k++)
+	{
+		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
+		for (uint j = 0; j <= N; j++) {
+			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
+			v.push_back({ vec3(r * sint * cosp + 120,r * sint * sinp-40,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+		}
+
+	}
+	r = 5.f;
+	for (uint k = 0; k <= N/2; k++)
+	{
+		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
+		for (uint j = 0; j <= N; j++) {
+			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
+			v.push_back({ vec3(r * sint * cosp + 135,r * sint * sinp+20,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+		}
+
+	}
+	r = 6.f;
+	for (uint k = 0; k <= N/2; k++)
+	{
+		float t = PI * 2.0f * k / float(N), cost = cos(t), sint = sin(t);
+		for (uint j = 0; j <= N; j++) {
+			float p = PI * 2.0f * j / float(N), cosp = cos(p), sinp = sin(p);//theta=latitude
+			v.push_back({ vec3(r * sint * cosp + 165,r * sint * sinp+90,r * cost), vec3(sint * cosp,sint * sinp,cost), vec2(p / (2 * PI),1.0f - t / PI) });
+		}
+
+	}*/
 	return v;
 }
 
@@ -330,8 +393,7 @@ bool user_init()
 	glEnable( GL_DEPTH_TEST );								// turn on depth tests
 
 	// load the mesh
-	float radii = 0.91f;
-	float orbit_radius = 5.0f;
+	
 	sun = std::move(create_circle_vertices(NUM_TESS));
 	
 	// create vertex buffer; called again when index buffering mode is toggled
