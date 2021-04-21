@@ -80,7 +80,7 @@ inline mat4 trackball::update_zoom(vec2 m) const
 	vec3 n_eyeminusat = vec3(view_matrix0._11, view_matrix0._12, view_matrix0._13);
 	vec3 u_upcrossn = vec3(view_matrix0._21, view_matrix0._22, view_matrix0._23);
 	vec3 v_ncrossu = vec3(view_matrix0._31, view_matrix0._32, view_matrix0._33);
-	rebuild._34 += p1.y*10.0f;
+	rebuild._34 += p1.y*150.0f;
 	
 	//rebuild = rebuild.transpose();
 	//mat4 rebuild = view_matrix0*mat4::rotate(v.normalize(), theta);
@@ -110,8 +110,8 @@ inline mat4 trackball::update_pan(vec2 m) const
 	vec3 v = mat3(view_matrix0).transpose() * p0.cross(p1);
 	float theta = asin(std::min(v.length(), 1.0f));
 	mat4 rebuild = view_matrix0;
-	rebuild._14 += p1.x * 10.0f;
-	rebuild._24 += p1.y * 10.0f;
+	rebuild._14 += p1.x * 150.0f;
+	rebuild._24 += p1.y * 150.0f;
 	// resulting view matrix, which first applies
 	// trackball rotation in the world space
 	return rebuild;
